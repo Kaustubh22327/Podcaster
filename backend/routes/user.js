@@ -3,7 +3,7 @@ const user = require("../models/user.js");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const router = require("express").Router();
-// Register route
+// Register route done
 router.post("/register", async (req, res) => {
   console.log("Inside register route");
 
