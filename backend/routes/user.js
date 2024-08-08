@@ -3,6 +3,7 @@ const user = require("../models/user.js");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const router = require("express").Router();
+const auth = require("../middleware/auth.js");
 // Register route done
 router.post("/register", async (req, res) => {
   console.log("Inside register route");
@@ -39,6 +40,7 @@ router.post("/register", async (req, res) => {
     // Create a new user
     const newUser = new user({ username, email, password: hashedPass });
     await newUser.save();
+
     return res.status(200).json({ message: "Account created successfully" });
   } catch (error) {
     console.error(error);
@@ -113,6 +115,22 @@ router.post("/check-cookie", async (req, res) => {
     return res.status(200).json({ message: "true" });
   }
   res.status(200).json({ message: "false" });
+});
+
+//route to fetch user details
+app.get("/user-detail", auth, async (req, res) => {
+  try {
+    const { email } = req.user;
+    const existingUser = await User.findOne({ email: email }).select(
+      "password"
+    );
+    return res.status(200).json({
+      user: existingUser,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "error" });
+  }
 });
 
 module.exports = router;
