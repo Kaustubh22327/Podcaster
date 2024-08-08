@@ -1,82 +1,78 @@
-const router = require("express").Router();
-const user = require("./../models/user.js");
+// const router = require("express").Router();
+const user = require("../models/user.js");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-
+const router = require("express").Router();
+// Register route
 router.post("/register", async (req, res) => {
-  console.log("hii from befire the register try block");
+  console.log("Inside register route");
 
   try {
-    console.log("hii from register try block");
     const { username, email, password } = req.body;
     if (!username || !email || !password) {
-      return res.status(400).json({ message: "all fields are required" });
+      return res.status(400).json({ message: "All fields are required" });
     }
     if (username.length < 5) {
       return res
         .status(400)
-        .json({ message: "username must have 5 cahracters" });
+        .json({ message: "Username must have 5 characters" });
     }
     if (password.length < 6) {
       return res
         .status(400)
-        .json({ message: "password must have 6 cahracters" });
+        .json({ message: "Password must have 6 characters" });
     }
-    console.log("hii from register try block level 2");
 
-    //check user exists or not by checking email/username in database
-    const existingemail = await user.findOne({ email: email });
-    const existingusername = await user.findOne({ username: username });
-    if (existingemail || existingusername) {
+    // Check if user already exists
+    const existingEmail = await user.findOne({ email });
+    const existingUsername = await user.findOne({ username });
+    if (existingEmail || existingUsername) {
       return res
         .status(400)
-        .json({ message: "username or email already exists " });
+        .json({ message: "Username or email already exists" });
     }
-    console.log("hii from register try block level 3");
 
-    //agar abhi tak koi error nahi aaya to password ko hash kardo
+    // Hash the password
     const salt = await bcrypt.genSalt(10);
     const hashedPass = await bcrypt.hash(password, salt);
-    console.log("hii from register try block level 4");
 
-    //new user create karenge
+    // Create a new user
     const newUser = new user({ username, email, password: hashedPass });
     await newUser.save();
-    return res.status(200).json({ message: "account created successfully" });
+    return res.status(200).json({ message: "Account created successfully" });
   } catch (error) {
-    console.log(error);
-    return res.status(400).json({ error });
+    console.error(error);
+    return res.status(500).json({ error: "Internal server error" });
   }
 });
 
-//login in fucntionality
-
+// Login route
 router.post("/sign-in", async (req, res) => {
   try {
     const { email, password } = req.body;
-
     if (!email || !password) {
       return res
         .status(400)
-        .json({ message: "all fields are required to sign in" });
+        .json({ message: "All fields are required to sign in" });
     }
-    //check user exists or not by checking email/username in database
-    const existingUser = await user.findOne({ email: email });
+
+    // Check if user exists
+    const existingUser = await user.findOne({ email });
     if (!existingUser) {
       return res
         .status(400)
-        .json({ message: "The enterned email does not exist" });
+        .json({ message: "The entered email does not exist" });
     }
 
-    //if email is found check for password matching
+    // Check if password matches
     const isMatch = await bcrypt.compare(password, existingUser.password);
     if (!isMatch) {
-      return res.status(400).json({
-        message: "Entered password does not match , please try again",
-      });
+      return res
+        .status(400)
+        .json({ message: "Entered password does not match, please try again" });
     }
 
-    //generate jwt token
+    // Generate JWT token
     const token = jwt.sign(
       { id: existingUser._id, email: existingUser.email },
       process.env.JWT_SECRET,
@@ -85,36 +81,38 @@ router.post("/sign-in", async (req, res) => {
 
     res.cookie("podcasterUserToken", token, {
       httpOnly: true,
-      maxAge: 30 * 24 * 60 * 60 * 100,
+      maxAge: 30 * 24 * 60 * 60 * 1000,
       sameSite: "None",
       secure: process.env.NODE_ENV === "production",
     });
 
     return res.status(200).json({
-      id,
+      id: existingUser._id,
       username: existingUser.username,
       email: existingUser.email,
-      message: "logged in successfully",
+      message: "Logged in successfully",
     });
   } catch (error) {
-    res.status(500).json({ error });
+    console.error(error);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
-//logout
-router.post("logout", async (req, res) => {
+// Logout route
+router.post("/logout", async (req, res) => {
   res.clearCookie("podcasterUserToken", {
     httpOnly: true,
   });
-  res.status(200).json({ message: "logged out successfully" });
+  res.status(200).json({ message: "Logged out successfully" });
 });
 
-//check cookie is presennt or not
+// Check cookie route
 router.post("/check-cookie", async (req, res) => {
   const token = req.cookies.podcasterUserToken;
   if (token) {
-    res.status(200).json({ message: "true" });
+    return res.status(200).json({ message: "true" });
   }
   res.status(200).json({ message: "false" });
 });
+
 module.exports = router;
