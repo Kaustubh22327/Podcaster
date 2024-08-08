@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const podcasts = new mongoose.Schema(
+const category = new mongoose.Schema(
   {
     categoryName: {
       type: String, //url denge
