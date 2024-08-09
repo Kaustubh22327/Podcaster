@@ -5,12 +5,12 @@ const storage = multer.diskStorage({
     cb(null, "uploads/");
   },
   filename: (req, file, cb) => {
-    cb(null, `${Date.now()}-${file.originalnfame}}`);
+    cb(null, `${Date.now()}-${file.originalname}}`);
   },
 });
 
 //initialize uplaodd
-const uplaod = multer({
+const upload = multer({
   storage: storage,
 }).fields([
   { name: "frontImage", maxCount: 1 },

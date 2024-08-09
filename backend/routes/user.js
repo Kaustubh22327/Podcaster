@@ -122,7 +122,7 @@ app.get("/user-detail", auth, async (req, res) => {
   try {
     const { email } = req.user;
     const existingUser = await User.findOne({ email: email }).select(
-      "password"
+      "-password"
     );
     return res.status(200).json({
       user: existingUser,
